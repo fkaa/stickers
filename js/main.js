@@ -451,7 +451,7 @@ imageInput.onchange = function(evt) {
 				);
 
 				maskList.innerHTML="";
-				
+
 				let idx = 0;
 				objects.forEach(o => {
 					let sticker = createSticker(inputImg, o.mask, 
@@ -460,15 +460,24 @@ imageInput.onchange = function(evt) {
 						o.bounding[2],
 						o.bounding[3],
 						false,
-					o.scale,
-					o.ratio);
-					sticker.style.width = "64px";
+						o.scale,
+						o.ratio);
 
 					let i = document.createElement("input");
-					i.type = "radio";
-					i.value = idx++;
+					i.type = "image";
+					i.src = sticker.src;
+					i.style.width = "64px";			i.classList.add("stickerButton");
+					i.onclick = () => {
+						transferStickerToCanvas(sticker, 
+						o.bounding[0],
+						o.bounding[1],
+						o.bounding[2],
+						o.bounding[3],
+
+							o.scale, o.ratio);
+					};
 					maskList.appendChild(i);
-					maskList.appendChild(sticker);
+					//maskList.appendChild(sticker);
 				});
 
 			}, 50);
@@ -505,6 +514,54 @@ let inputCanvas = new fabric.Canvas('input', { isDrawingMode: true });
 inputCanvas.freeDrawingBrush = new fabric.PencilBrush(inputCanvas);
 inputCanvas.freeDrawingBrush.width = 30;
 inputCanvas.on('path:created', function() {
+	createStickerFromMask();
+});
+let maskCanvas = new fabric.Canvas('mask');
+
+function createSticker(source, mask, x, y, w, h, maskCropped, scale, ratio) {
+	var canvas = document.createElement("canvas");
+	canvas.width = w;
+	canvas.height = h;
+	var ctx = canvas.getContext("2d");
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	if (maskCropped) {
+		ctx.putImageData(mask, 0, 0);
+		ctx.globalCompositeOperation = 'source-in';
+		ctx.drawImage(source, x, y, w, h, 0, 0, w, h);
+	}
+	else {
+		let sx = scale[0];
+		let sy = scale[1];
+		let rx = ratio[0];
+		let ry = ratio[1];
+		ctx.drawImage(mask, x, y, w, h, 0, 0, w, h);
+		ctx.globalCompositeOperation = 'source-in';
+		ctx.drawImage(source, x*sx, y*sy, w*sx, h*sy, 0, 0, w, h);
+	}
+
+	var img = document.createElement("img");
+	img.src = canvas.toDataURL("image/png");
+	return img;
+}
+
+function transferStickerToCanvas(sticker, x, y, x2, y2, scale, ratio) {
+	inputCanvas.remove(...inputCanvas.getObjects());
+
+	var imgInstance = new fabric.Image(sticker, {
+		left: x*scale[0],
+		top: y*scale[1],
+		angle: 0,
+		opacity: 1.0,
+		scaleX: scale[0],
+		scaleY: scale[1],
+		//width:300,
+		//height:300
+	});
+	inputCanvas.add(imgInstance);   
+
+	createStickerFromMask();
+}
+function createStickerFromMask() {
 	console.log("path craeted");
 
 	let mx = inputCanvas.width;
@@ -512,10 +569,10 @@ inputCanvas.on('path:created', function() {
 	let mx2 = 0;
 	let my2 = 0;
 	inputCanvas.forEachObject(o => {
-		mx = Math.min(mx, o.left);
-		my = Math.min(my, o.top);
-		mx2 = Math.max(mx2, o.left+o.width + 30);
-		my2 = Math.max(my2, o.top+o.height + 30);
+		mx = Math.min(mx, o.left*o.scaleX);
+		my = Math.min(my, o.top*o.scaleY);
+		mx2 = Math.max(mx2, o.left+o.width*o.scaleX + 30);
+		my2 = Math.max(my2, o.top+o.height*o.scaleY + 30);
 	});
 
 	//let a = new fabric.Group(inputCanvas.getObjects());
@@ -532,34 +589,8 @@ inputCanvas.on('path:created', function() {
 
 	setTimeout(() => {
 
+		inputCanvas.renderAll();
 		let img = createSticker(inputImg, croppedMask, mx, my, mx2-mx, my2-my, true);
 		result.src = img.src;
 	}, 50);
-});
-let maskCanvas = new fabric.Canvas('mask');
-
-function createSticker(source, mask, x, y, w, h, maskCropped, scale, ratio) {
-	var canvas = document.createElement("canvas");
-	canvas.width = w;
-	canvas.height = h;
-	var ctx = canvas.getContext("2d");
-	ctx.clearRect(0, 0, canvas.width, canvas.height);
-	if (maskCropped) {
-		ctx.putImageData(mask, 0, 0);
-	ctx.globalCompositeOperation = 'source-in';
-	ctx.drawImage(source, x, y, w, h, 0, 0, w, h);
-	}
-	else {
-		let sx = scale[0];
-		let sy = scale[1];
-		let rx = ratio[0];
-		let ry = ratio[1];
-		ctx.drawImage(mask, x, y, w, h, 0, 0, w, h);
-	ctx.globalCompositeOperation = 'source-in';
-	ctx.drawImage(source, x*sx, y*sy, w*sx, h*sy, 0, 0, w, h);
-	}
-
-	var img = document.createElement("img");
-	img.src = canvas.toDataURL("image/png");
-	return img;
 }
