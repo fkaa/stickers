@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Sticker NATION</title>
+		<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+		<script src="js/opencv.js"></script>
+		<script src="js/fabric.min.js"></script>
+		<style>
+html,body {width:100%;margin:0;padding:0;}
+body {width:90%;margin: 0.5em;}
+table {
+	table-layout: fixed;
+	width:100%;}
+
+table,th,td {
+	border-collapse: collapse;
+	border: 1px solid #000;
+}
+
+table {
+	border: 16px bevel;
+	elevation: 5        /* the _border_ elevation */
+}
+td, th {
+	border: 12px bevel;
+	elevation: -1
+}
+#canvasHolder {
+	position: relative;
+}
+#inputImg {
+	position: absolute;
+}
+#result {
+	border: 4px dashed red;
+}
+		</style>
+		<link href="css/style.css" rel="stylesheet">
+	</head>
+
+	<body>
+		<h1>Create stickers from an image</h1>
+		<p>Drop an image here <span id="image-drop"><input type="file" id="imageInput" size="24" accept="image/*"/></span>
+
+		<h1>Edit mask</h1>
+		<p>Configure how to cut out the mask by drawing or erasing from the mask overlaying the image below
+		<p>Or use a pre-generated mask if available:
+		<div id="maskList">
+		</div>
+
+		<div class="canvasHolder">
+			<img id="inputImg" />
+			<canvas id="input"><p>test</canvas>
+		</div>
+
+		<h1>Result</h1>
+		<img id="result" />
+		<p><a href="#">Download me!</a>
+		<p>You can also configure a destination image size by entering the desired size: <input size="20" type="number" />x<input type="number" />
+		<script src="js/main.js"></script>
+	</body>
+</html>
